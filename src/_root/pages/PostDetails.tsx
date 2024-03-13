@@ -1,20 +1,54 @@
-import { useGetPostById } from "@/lib/react-query/queriesAndMutations.ts";
-import { Link, useParams } from "react-router-dom";
+import {
+  useDeletePost,
+  useGetPostById,
+  useGetUserPosts,
+} from "@/lib/react-query/queriesAndMutations.ts";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import Loader from "@/components/shared/Loader.tsx";
 import { formatDate } from "@/lib/utils.ts";
 import { useUserContext } from "@/context/AuthContext.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import PostStats from "@/components/shared/PostStats.tsx";
+import GridPostList from "@/components/shared/GridPostList.tsx";
 
 const PostDetails = () => {
+  const navigate = useNavigate();
   const { id } = useParams();
   const { data: post, isPending } = useGetPostById(id || "");
   const { user } = useUserContext();
-  const handleDeletePost = () => {};
+  const { data: userPosts, isLoading: isUserPostLoading } = useGetUserPosts(
+    post?.creator.$id,
+  );
+  const { mutate: deletePost } = useDeletePost();
+
+  const relatedPosts = userPosts?.documents.filter(
+    (userPost) => userPost.$id !== id,
+  );
+
+  const handleDeletePost = () => {
+    deletePost({ postId: id, imageId: post?.imageId });
+    navigate(-1);
+  };
 
   return (
     <div className="post_details-container">
-      {isPending ? (
+      <div className="hidden md:flex max-w-5xl w-full">
+        <Button
+          onClick={() => navigate(-1)}
+          variant="ghost"
+          className="shad-button_ghost"
+        >
+          <img
+            src={"/assets/icons/back.svg"}
+            alt="back"
+            width={24}
+            height={24}
+          />
+          <p className="small-medium lg:base-medium">Back</p>
+        </Button>
+      </div>
+
+      {isPending || !post ? (
         <Loader />
       ) : (
         <div className="post_details-card">
@@ -95,6 +129,18 @@ const PostDetails = () => {
           </div>
         </div>
       )}
+      <div className="w-full max-w-5xl">
+        <hr className="border w-full border-dark-4/80" />
+
+        <h3 className="body-bold md:h3-bold w-full my-10">
+          More Related Posts
+        </h3>
+        {isUserPostLoading || !relatedPosts ? (
+          <Loader />
+        ) : (
+          <GridPostList posts={relatedPosts} />
+        )}
+      </div>
     </div>
   );
 };
