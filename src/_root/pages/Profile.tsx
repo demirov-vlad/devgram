@@ -109,7 +109,7 @@ const Profile = () => {
             }`}
           >
             <img
-              src={"/assets/icons/posts.svg"}
+              src={"/assets/icons/favicon.ico"}
               alt="posts"
               width={20}
               height={20}
